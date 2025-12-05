@@ -56,7 +56,6 @@ local tabGroups = {
 
 local tabs = {
 	Esp = tabGroups.TabGroup1:Tab({ Name = "MainUsing", Image = "rbxassetid://84727577248856" }),
-	EspM = tabGroups.TabGroup1:Tab({ Name = "EspM", Image = "rbxassetid://84727577248856" }),
 	Aim = tabGroups.TabGroup1:Tab({ Name = "Aimbot", Image = "rbxassetid://130939958971532" }),
 	Uni = tabGroups.TabGroup1:Tab({ Name = "Visual", Image = "rbxassetid://122760395538267" }),
 	Pla = tabGroups.TabGroup1:Tab({ Name = "Player", Image = "rbxassetid://122760395538267" }),
@@ -67,7 +66,6 @@ local tabs = {
 local sections = {
 	EspSection1 = tabs.Esp:Section({ Side = "Left" }),
 	Esp2Section1 = tabs.Esp:Section({ Side = "Right" }),
-	EspMSection1 = tabs.EspM:Section({ Side = "Left" }),
 	AimSection1 = tabs.Aim:Section({ Side = "Left" }),
 	Aim2Section1 = tabs.Aim:Section({ Side = "Right" }),
 	UniSection1 = tabs.Uni:Section({ Side = "Left" }),
