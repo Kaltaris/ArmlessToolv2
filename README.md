@@ -141,7 +141,7 @@ sections.EspSection1:Slider({
     Name = "Tốc Độ Speed",
     Default = 50,
     Minimum = 16,
-    Maximum = 7000, -- Đã tăng maximum lên 5000
+    Maximum = 500, -- Đã tăng maximum lên 5000
     DisplayMethod = "Value",
     Precision = 0,
     Callback = function(Value)
