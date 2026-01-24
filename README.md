@@ -56,8 +56,6 @@ local tabGroups = {
 
 local tabs = {
 	Esp = tabGroups.TabGroup1:Tab({ Name = "MainUsing", Image = "rbxassetid://84727577248856" }),
-	EspM = tabGroups.TabGroup1:Tab({ Name = "EspM", Image = "rbxassetid://84727577248856" }),
-	Aim = tabGroups.TabGroup1:Tab({ Name = "Aimbot", Image = "rbxassetid://130939958971532" }),
 	Uni = tabGroups.TabGroup1:Tab({ Name = "Visual", Image = "rbxassetid://122760395538267" }),
 	Pla = tabGroups.TabGroup1:Tab({ Name = "Player", Image = "rbxassetid://122760395538267" }),
 	Sha = tabGroups.TabGroup1:Tab({ Name = "Đồ họa", Image = "rbxassetid://87916652848972" }),
@@ -67,9 +65,6 @@ local tabs = {
 local sections = {
 	EspSection1 = tabs.Esp:Section({ Side = "Left" }),
 	Esp2Section1 = tabs.Esp:Section({ Side = "Right" }),
-	EspMSection1 = tabs.EspM:Section({ Side = "Left" }),
-	AimSection1 = tabs.Aim:Section({ Side = "Left" }),
-	Aim2Section1 = tabs.Aim:Section({ Side = "Right" }),
 	UniSection1 = tabs.Uni:Section({ Side = "Left" }),
 	Uni2Section1 = tabs.Uni:Section({ Side = "Right" }),
 	PlaSection1 = tabs.Pla:Section({ Side = "Left" }),
@@ -789,7 +784,7 @@ sections.UniSection1:Toggle({
     end
 })
 
-----------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
 ------------------------------------------
 sections.Uni2Section1:Header({
@@ -1135,7 +1130,7 @@ sections.ShaSection1:Toggle({
         })
     end
 }, "Toggle")
-------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 sections.EspSection1:Header({
 	Name = "Universal"
 })
@@ -1423,7 +1418,7 @@ player.CharacterAdded:Connect(function(character)
         end
     end
 end)
--------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 local floatEnabled = false
 local floatHeight = 100 -- Độ cao mặc định khi bật Float
 
@@ -1610,7 +1605,7 @@ end)
 local antiAFKEnabled = true
 
 -- Toggle UI với tên tiếng Việt
-sections.Pla2Section1:Toggle({
+sections.Esp2Section1:Toggle({
     Name = "Chống AFK",
     Default = true,
     Callback = function(Value)
@@ -1643,7 +1638,7 @@ local fovEnabled = false
 local currentFOV = 70
 
 -- FOV Toggle
-sections.Uni2Section1:Toggle({
+sections.Esp2Section1:Toggle({
     Name = "FOV Changer",
     Default = false,
     Callback = function(Value)
@@ -2455,217 +2450,6 @@ sections.Pla2Section1:Toggle({
     end
 })
 ---------------------------------------
-sections.EspMSection1:Paragraph({
-	Header = "Chức Năng Này Hiện Chưa Ổn Định",
-	Body = "Sẽ Esp Chams Lên Tất Cả Item Và Model"
-})
-
-sections.EspMSection1:Toggle({
-    Name = "ESPM Chams",
-    Default = false,
-    Callback = function(value)
-        if value then
-            local RunService = game:GetService("RunService")
-            local Players = game:GetService("Players")
-            local LocalPlayer = Players.LocalPlayer
-            
-            if not getgenv().espHighlights then
-                getgenv().espHighlights = {}
-            end
-            
-            if not getgenv().trackedObjects then
-                getgenv().trackedObjects = {}
-            end
-
-            local function hasClickDetector(object)
-                if object:IsA("BasePart") and object:FindFirstChildOfClass("ClickDetector") then
-                    return true
-                elseif object:IsA("Model") then
-                    for _, part in ipairs(object:GetDescendants()) do
-                        if part:FindFirstChildOfClass("ClickDetector") then
-                            return true
-                        end
-                    end
-                end
-                return false
-            end
-
-            local function createHighlight(object, color)
-                if object:FindFirstChild("Highlight") then return end
-                
-                local highlight = Instance.new("Highlight")
-                highlight.FillColor = color or Color3.fromRGB(255, 0, 0)
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                highlight.FillTransparency = 0.5
-                highlight.OutlineTransparency = 0
-                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                highlight.Parent = object
-                
-                table.insert(getgenv().espHighlights, highlight)
-                return highlight
-            end
-
-            local function updateHighlight(object)
-                if not object or not object.Parent then return end
-                
-                local highlight = object:FindFirstChild("Highlight")
-                if not highlight then return end
-                
-                -- Cập nhật màu sắc dựa trên loại đối tượng
-                if object:IsA("Model") and object:FindFirstChild("Humanoid") then
-                    highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Màu đỏ cho NPC
-                else
-                    highlight.FillColor = Color3.fromRGB(0, 0, 255) -- Màu xanh cho items
-                end
-            end
-
-            local function handleESP(object)
-                -- Xử lý objects có ClickDetector
-                if hasClickDetector(object) then
-                    if not getgenv().trackedObjects[object] then
-                        local pos = object:IsA("Model") and 
-                            (object:GetPrimaryPartCFrame() and object:GetPrimaryPartCFrame().Position or object:GetModelCFrame().Position) or 
-                            object.Position
-                        getgenv().trackedObjects[object] = {
-                            isItem = true,
-                            lastPosition = pos
-                        }
-                    end
-                    createHighlight(object, Color3.fromRGB(0, 0, 255))
-                end
-                
-                -- Xử lý models có Humanoid (NPC)
-                if object:IsA("Model") and object:FindFirstChild("Humanoid") then
-                    local isPlayer = false
-                    for _, player in ipairs(Players:GetPlayers()) do
-                        if player.Character == object then
-                            isPlayer = true
-                            break
-                        end
-                    end
-                    
-                    if not isPlayer then
-                        if not getgenv().trackedObjects[object] then
-                            getgenv().trackedObjects[object] = {
-                                isNPC = true,
-                                lastPosition = object:GetPrimaryPartCFrame().Position
-                            }
-                        end
-                        createHighlight(object, Color3.fromRGB(255, 0, 0))
-                        
-                        -- Theo dõi di chuyển của NPC
-                        if not object:GetAttribute("ESP_Tracking") then
-                            object:SetAttribute("ESP_Tracking", true)
-                            local humanoid = object:FindFirstChild("Humanoid")
-                            if humanoid then
-                                humanoid.Running:Connect(function()
-                                    if getgenv().trackedObjects[object] then
-                                        updateHighlight(object)
-                                    end
-                                end)
-                            end
-                        end
-                    end
-                end
-            end
-
-            local function cleanupObject(object)
-                if getgenv().trackedObjects[object] then
-                    getgenv().trackedObjects[object] = nil
-                end
-                if object:FindFirstChild("Highlight") then
-                    local highlight = object.Highlight
-                    for i, stored_highlight in ipairs(getgenv().espHighlights) do
-                        if stored_highlight == highlight then
-                            table.remove(getgenv().espHighlights, i)
-                            break
-                        end
-                    end
-                    highlight:Destroy()
-                end
-            end
-
-            -- Khởi tạo ESP cho objects hiện có
-            for _, object in ipairs(workspace:GetDescendants()) do
-                handleESP(object)
-            end
-
-            local descendantAddedConnection = workspace.DescendantAdded:Connect(function(object)
-                task.wait()
-                handleESP(object)
-            end)
-
-            local descendantRemovingConnection = workspace.DescendantRemoving:Connect(cleanupObject)
-
-            local heartbeatConnection = RunService.Heartbeat:Connect(function()
-                for object, data in pairs(getgenv().trackedObjects) do
-                    if object and object.Parent then
-                        local currentPos
-                        if object:IsA("Model") and object:FindFirstChild("HumanoidRootPart") then
-                            currentPos = object.HumanoidRootPart.Position
-                        else
-                            currentPos = object:IsA("Model") and 
-                                (object:GetPrimaryPartCFrame() and object:GetPrimaryPartCFrame().Position or object:GetModelCFrame().Position) or 
-                                object.Position
-                        end
-                        
-                        -- Cập nhật vị trí cuối cùng
-                        if data.lastPosition then
-                            local distance = (currentPos - data.lastPosition).Magnitude
-                            if distance > 0.1 then
-                                -- Object đang di chuyển
-                                updateHighlight(object)
-                            end
-                        end
-                        data.lastPosition = currentPos
-                    else
-                        getgenv().trackedObjects[object] = nil
-                    end
-                end
-            end)
-
-            getgenv().ESPConnections = {
-                descendantAdded = descendantAddedConnection,
-                descendantRemoving = descendantRemovingConnection,
-                heartbeat = heartbeatConnection
-            }
-
-        else
-            -- Cleanup khi tắt ESP
-            if getgenv().ESPConnections then
-                for _, connection in pairs(getgenv().ESPConnections) do
-                    if connection then
-                        connection:Disconnect()
-                    end
-                end
-            end
-
-            if getgenv().espHighlights then
-                for _, highlight in ipairs(getgenv().espHighlights) do
-                    if highlight and highlight.Parent then
-                        highlight:Destroy()
-                    end
-                end
-                table.clear(getgenv().espHighlights)
-            end
-
-            if getgenv().trackedObjects then
-                for object, _ in pairs(getgenv().trackedObjects) do
-                    if object then
-                        object:SetAttribute("ESP_Tracking", nil)
-                    end
-                end
-                table.clear(getgenv().trackedObjects)
-            end
-        end
-
-        Window:Notify({
-            Title = Window.Settings.Title,
-            Content = value and "ESP Enabled" or "ESP Disabled",
-            Duration = 3
-        })
-    end,
-}, "Toggle")
 ---------------------------------------------------------------------------------------------------------------------------------------------------------
 local ESP = {
     Enabled = false,
