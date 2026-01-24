@@ -56,6 +56,7 @@ local tabGroups = {
 
 local tabs = {
 	Esp = tabGroups.TabGroup1:Tab({ Name = "MainUsing", Image = "rbxassetid://84727577248856" }),
+	EspM = tabGroups.TabGroup1:Tab({ Name = "EspM", Image = "rbxassetid://84727577248856" }),
 	Aim = tabGroups.TabGroup1:Tab({ Name = "Aimbot", Image = "rbxassetid://130939958971532" }),
 	Uni = tabGroups.TabGroup1:Tab({ Name = "Visual", Image = "rbxassetid://122760395538267" }),
 	Pla = tabGroups.TabGroup1:Tab({ Name = "Player", Image = "rbxassetid://122760395538267" }),
@@ -66,6 +67,7 @@ local tabs = {
 local sections = {
 	EspSection1 = tabs.Esp:Section({ Side = "Left" }),
 	Esp2Section1 = tabs.Esp:Section({ Side = "Right" }),
+	EspMSection1 = tabs.EspM:Section({ Side = "Left" }),
 	AimSection1 = tabs.Aim:Section({ Side = "Left" }),
 	Aim2Section1 = tabs.Aim:Section({ Side = "Right" }),
 	UniSection1 = tabs.Uni:Section({ Side = "Left" }),
@@ -84,295 +86,6 @@ local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local player = Players.LocalPlayer
 local VirtualUser = game:GetService("VirtualUser")
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-sections.EspSection1:Header({
-	Name = "Universal"
-})
--- Phiên bản bypass anti-cheat cơ bản
-local speedEnabled = false
-local speedValue = 50
-
--- Bypass basic anti-cheat
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
-local old = mt.__namecall
-mt.__namecall = newcclosure(function(...)
-    local args = {...}
-    local method = getnamecallmethod()
-    
-    if method == "FireServer" or method == "InvokeServer" then
-        -- Chặn các remote events liên quan đến speed/movement
-        if args[1] == "WalkSpeed" or args[1] == "Speed" or args[1] == "CheckSpeed" then
-            return
-        end
-    end
-    return old(...)
-end)
-setreadonly(mt, true)
-
--- Sử dụng CFrame movement thay vì WalkSpeed
-local function speedBypass()
-    if speedEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        local humanoidRootPart = player.Character.HumanoidRootPart
-        local moveDirection = player.Character.Humanoid.MoveDirection
-        
-        if moveDirection.Magnitude > 0 then
-            -- Tăng hệ số chia để giảm độ nhạy của tốc độ cao
-            humanoidRootPart.CFrame = humanoidRootPart.CFrame + moveDirection * (speedValue/1000)
-        end
-    end
-end
-
-RunService.Heartbeat:Connect(speedBypass)
-
-sections.EspSection1:Toggle({
-    Name = "Speed Hack",
-    Default = false,
-    Callback = function(value)
-        speedEnabled = value
-        Window:Notify({
-            Title = "Speed Bypass",
-            Content = value and "Enabled" or "Disabled"
-        })
-    end
-}, "SpeedToggle")
-
-sections.EspSection1:Slider({
-    Name = "Tốc Độ Speed",
-    Default = 50,
-    Minimum = 16,
-    Maximum = 500, -- Đã tăng maximum lên 5000
-    DisplayMethod = "Value",
-    Precision = 0,
-    Callback = function(Value)
-        speedValue = Value
-    end
-}, "SpeedSlider")
-
--------------------------
-local jumpEnabled = false 
-local jumpValue = 50
-local defaultJump = 50
-local currentMode = "JumpPower"
-
--- Basic anti-cheat bypass
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
-local old = mt.__namecall
-mt.__namecall = newcclosure(function(...)
-    local args = {...}
-    local method = getnamecallmethod()
-    if method == "FireServer" or method == "InvokeServer" then
-        if args[1] == "JumpPower" or args[1] == "JP" or args[1] == "JumpHeight" then
-            return
-        end
-    end
-    return old(...)
-end)
-setreadonly(mt, true)
-
--- Function để set jump value dựa theo mode
-local function setJumpValue(humanoid, value)
-    if currentMode == "JumpPower" then
-        humanoid.JumpPower = value
-        humanoid.UseJumpPower = true
-    else
-        humanoid.JumpHeight = value/2.5
-    end
-end
-
-sections.EspSection1:Dropdown({
-    Name = "Mode Nhảy",
-    Multi = false,
-    Required = true,
-    Options = {"JumpPower", "JumpHeight"},
-    Default = 1,
-    Callback = function(Value)
-        currentMode = Value
-        if jumpEnabled and player.Character and player.Character:FindFirstChild("Humanoid") then
-            setJumpValue(player.Character.Humanoid, jumpValue)
-        end
-        Window:Notify({
-            Title = "Jump Mode",
-            Content = "Changed to " .. Value
-        })
-    end
-}, "JumpModeDropdown")
-
-sections.EspSection1:Toggle({
-    Name = "Nhảy Cao",
-    Default = false,
-    Callback = function(value)
-        jumpEnabled = value
-        if value then
-            if player.Character and player.Character:FindFirstChild("Humanoid") then
-                setJumpValue(player.Character.Humanoid, jumpValue)
-            end
-            Window:Notify({
-                Title = "Jump Changer",
-                Content = "Enabled"
-            })
-        else
-            if player.Character and player.Character:FindFirstChild("Humanoid") then
-                setJumpValue(player.Character.Humanoid, defaultJump)
-            end
-            Window:Notify({
-                Title = "Jump Changer",
-                Content = "Disabled"
-            })
-        end
-    end
-}, "JumpToggle")
-
-sections.EspSection1:Slider({
-    Name = "Sức Nhảy",
-    Default = 50,
-    Minimum = 50,
-    Maximum = 500, -- Tăng maximum lên 5000
-    DisplayMethod = "Value",
-    Precision = 0,
-    Callback = function(Value)
-        jumpValue = Value
-        if jumpEnabled then
-            if player.Character and player.Character:FindFirstChild("Humanoid") then
-                setJumpValue(player.Character.Humanoid, Value)
-            end
-        end
-    end
-}, "JumpSlider")
-
--- Handle character respawn
-player.CharacterAdded:Connect(function(character)
-    local humanoid = character:WaitForChild("Humanoid")
-    if jumpEnabled then
-        setJumpValue(humanoid, jumpValue)
-    end
-end)
------------------------------
-sections.EspSection1:Paragraph({
-	Header = "Ấn Giữ Nút Nhảy Hoặc Bấm Liên Tục Nút Nhảy",
-	Body = "Có Thể Dùng Kết Hợp Nhảy Cao"
-})
-
-local infiniteJumpEnabled = false
-
--- Basic anti-cheat bypass
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
-local old = mt.__namecall
-mt.__namecall = newcclosure(function(...)
-    local args = {...}
-    local method = getnamecallmethod()
-    if method == "FireServer" or method == "InvokeServer" then
-        if args[1] == "JumpRequest" or args[1] == "Jump" then
-            return
-        end
-    end
-    return old(...)
-end)
-setreadonly(mt, true)
-
--- Infinite Jump Logic
-UserInputService.JumpRequest:Connect(function()
-    if infiniteJumpEnabled then
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
-    end
-end)
-
-sections.EspSection1:Toggle({
-    Name = "Nhảy Liên Tục",
-    Default = false,
-    Callback = function(value)
-        infiniteJumpEnabled = value
-        Window:Notify({
-            Title = "Infinite Jump",
-            Content = value and "Enabled" or "Disabled"
-        })
-    end
-}, "InfiniteJumpToggle")
--------------------------------------
-local noclipEnabled = false
-
--- Basic anti-cheat bypass
-local mt = getrawmetatable(game)
-setreadonly(mt, false)
-local old = mt.__namecall
-mt.__namecall = newcclosure(function(...)
-    local args = {...}
-    local method = getnamecallmethod()
-    if method == "FireServer" or method == "InvokeServer" then
-        if args[1] == "Noclip" or args[1] == "Phase" then
-            return
-        end
-    end
-    return old(...)
-end)
-setreadonly(mt, true)
-
--- Noclip Function
-local function noclipRun()
-    if noclipEnabled then
-        if player.Character then
-            for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
-            end
-        end
-    end
-end
-
--- Connect noclip to RunService
-RunService.Stepped:Connect(noclipRun)
-
--- Noclip Toggle
-sections.EspSection1:Toggle({
-    Name = "Xuyên Tường",
-    Default = false,
-    Callback = function(value)
-        noclipEnabled = value
-        
-        if value then
-            -- Khi bật Noclip
-            if player.Character then
-                for _, part in pairs(player.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
-                end
-            end
-        else
-            -- Khi tắt Noclip
-            if player.Character then
-                for _, part in pairs(player.Character:GetDescendants()) do
-                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                        part.CanCollide = true
-                    end
-                end
-            end
-        end
-
-        Window:Notify({
-            Title = "Noclip",
-            Content = value and "Enabled" or "Disabled"
-        })
-    end
-}, "NoclipToggle")
-
--- Handle character respawn
-player.CharacterAdded:Connect(function(character)
-    if noclipEnabled then
-        wait(0.5) -- Đợi character load
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
-    end
-end)
-
 ------------------------------------------------------------------------------------------------------------
 sections.Esp2Section1:Header({
 	Name = "ESP Tên Người Chơi"
@@ -875,43 +588,7 @@ sections.Esp2Section1:Toggle({
         ESP.TeamCheck = value
     end
 })
--- Unlock Camera Distance Toggle
-sections.Esp2Section1:Toggle({
-    Name = "Mở Giới Hạn Camera",
-    Default = false,
-    Callback = function(Value)
-        if Value then
-            -- Tắt giới hạn camera của Roblox
-            if GameSettings.CameraMode == Enum.CameraMode.LockFirstPerson then
-                GameSettings.CameraMode = Enum.CameraMode.Classic
-            end
-            
-            -- Set khoảng cách camera tối đa
-            Players.LocalPlayer.CameraMaxZoomDistance = math.huge
-            GameSettings.CameraZoomSensitivity = 150
-            
-            -- Đảm bảo luôn được zoom xa
-            spawn(function()
-                while Value do
-                    wait()
-                    Players.LocalPlayer.CameraMaxZoomDistance = math.huge
-                    Players.LocalPlayer.CameraMinZoomDistance = 0.5
-                end
-            end)
-        else
-            -- Reset về mặc định
-            Players.LocalPlayer.CameraMaxZoomDistance = 400
-            Players.LocalPlayer.CameraMinZoomDistance = 0.5
-            GameSettings.CameraZoomSensitivity = 100
-        end
-        
-        Window:Notify({
-            Title = "Mở Giới Hạn Camera",
-            Content = Value and "Đã Bật" or "Đã Tắt"
-        })
-    end
-}, "UnlockCamDistToggle")
---------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 sections.UniSection1:Header({
 	Name = "ESP Tracer"
 })
@@ -1111,433 +788,9 @@ sections.UniSection1:Toggle({
         _G.Settings.TeamCheck = Value
     end
 })
-local antiAFKEnabled = true
 
--- Toggle UI với tên tiếng Việt
-sections.Esp2Section1:Toggle({
-    Name = "Chống AFK",
-    Default = true,
-    Callback = function(Value)
-        antiAFKEnabled = Value
-        
-        if antiAFKEnabled then
-            -- Khi người chơi bị kick vì AFK
-            Players.LocalPlayer.Idled:Connect(function()
-                if antiAFKEnabled then
-                    -- Giả lập click chuột để tránh AFK
-                    VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                    wait(0.1)
-                    VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-                end
-            end)
-        end
-        
-        Window:Notify({
-            Title = "Chống AFK",
-            Content = Value and "Đã Bật" or "Đã Tắt"
-        })
-    end
-}, "AntiAFKToggle")
--- FOV Slider
-sections.Esp2Section1:Slider({
-    Name = "Điều Chỉnh Tầm",
-    Default = 70,
-    Minimum = 1,
-    Maximum = 120,
-    DisplayMethod = "Value",
-    Precision = 0,
-    Callback = function(Value)
-        currentFOV = Value
-        if fovEnabled then
-            camera.FieldOfView = Value
-        end
-    end
-}, "FOVSlider")
-
--- Để đảm bảo FOV luôn được cập nhật
-RunService.RenderStepped:Connect(function()
-    if fovEnabled then
-        camera.FieldOfView = currentFOV
-    end
-end)
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local camera = workspace.CurrentCamera
-local defaultFOV = 70
-local fovEnabled = false
-local currentFOV = 70
-
--- FOV Toggle
-sections.Uni2Section1:Toggle({
-    Name = "FOV Changer",
-    Default = false,
-    Callback = function(Value)
-        fovEnabled = Value
-        if Value then
-            -- Lưu FOV mặc định
-            defaultFOV = camera.FieldOfView
-            camera.FieldOfView = currentFOV
-        else
-            -- Khôi phục FOV mặc định
-            camera.FieldOfView = defaultFOV
-        end
-        
-        Window:Notify({
-            Title = "Phạm Vi Quan Sát",
-            Content = Value and "Đã Bật" or "Đã Tắt"
-        })
-    end
-}, "FOVToggle")
-
-
-sections.Uni2Section1:Header({
-    Name = "ESP Chams"
-})
-
-_G.ChamsSettings = {
-    Enabled = false,
-    TeamCheck = false,
-    RoleCheck = false,
-    FillTransparency = 0.5,
-    OutlineTransparency = 0,
-    
-    Colors = {
-        Fill = Color3.fromRGB(0, 255, 0),
-        Outline = Color3.fromRGB(255, 255, 255),
-        Roles = {
-            ["Murderer"] = Color3.fromRGB(255, 0, 0),
-            ["Sheriff"] = Color3.fromRGB(0, 0, 255),
-            ["Innocent"] = Color3.fromRGB(0, 255, 0),
-        }
-    },
-    
-    Animation = {
-        Duration = 1,
-        Style = Enum.EasingStyle.Sine,
-        Direction = Enum.EasingDirection.Out
-    }
-}
-
--- Cache để lưu role của người chơi
-local PlayerRoles = {}
-local GameState = {
-    IsRoundActive = false
-}
-
-local function MonitorGameState()
-    local function checkRoundStatus()
-        local murderer = false
-        local sheriff = false
-        
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player.Character then
-                local hasKnife = player.Character:FindFirstChild("Knife") or (player.Backpack and player.Backpack:FindFirstChild("Knife"))
-                local hasGun = player.Character:FindFirstChild("Gun") or (player.Backpack and player.Backpack:FindFirstChild("Gun"))
-                
-                if hasKnife then murderer = true end
-                if hasGun then sheriff = true end
-            end
-        end
-        
-        if not (murderer and sheriff) then
-            if GameState.IsRoundActive then
-                GameState.IsRoundActive = false
-                -- Reset tất cả role khi round kết thúc
-                table.clear(PlayerRoles)
-            end
-        else
-            GameState.IsRoundActive = true
-        end
-    end
-    
-    RunService.Heartbeat:Connect(function()
-        checkRoundStatus()
-    end)
-end
-
-local function UpdatePlayerRole(Player)
-    if game.PlaceId ~= 142823291 then return end
-    if not GameState.IsRoundActive then return "Innocent" end
-    
-    local function CheckTools()
-        if not Player.Character then return "Innocent" end
-        if not Player.Backpack then return "Innocent" end
-        
-        -- Check trong character
-        for _, tool in pairs(Player.Character:GetChildren()) do
-            if tool:IsA("Tool") then
-                if tool.Name == "Knife" then
-                    return "Murderer"
-                elseif tool.Name == "Gun" then
-                    return "Sheriff"
-                end
-            end
-        end
-        
-        -- Check trong backpack
-        for _, tool in pairs(Player.Backpack:GetChildren()) do
-            if tool:IsA("Tool") then
-                if tool.Name == "Knife" then
-                    return "Murderer"
-                elseif tool.Name == "Gun" then
-                    return "Sheriff"
-                end
-            end
-        end
-        
-        return "Innocent"
-    end
-    
-    PlayerRoles[Player.UserId] = CheckTools()
-    
-    -- Theo dõi thay đổi trong Backpack
-        if not Player.Backpack:FindFirstChild("RoleMonitor") then
-        local monitor = Instance.new("BoolValue")
-        monitor.Name = "RoleMonitor"
-        monitor.Parent = Player.Backpack
-        
-        Player.Backpack.ChildAdded:Connect(function(child)
-            if child:IsA("Tool") and GameState.IsRoundActive then
-                PlayerRoles[Player.UserId] = CheckTools()
-            end
-        end)
-        
-        Player.Backpack.ChildRemoved:Connect(function(child)
-            if child:IsA("Tool") and GameState.IsRoundActive then
-                PlayerRoles[Player.UserId] = CheckTools()
-            end
-        end)
-    end
-    
-    if Player.Character and not Player.Character:FindFirstChild("RoleMonitor") then
-        local monitor = Instance.new("BoolValue")
-        monitor.Name = "RoleMonitor"
-        monitor.Parent = Player.Character
-        
-        Player.Character.ChildAdded:Connect(function(child)
-            if child:IsA("Tool") and GameState.IsRoundActive then
-                PlayerRoles[Player.UserId] = CheckTools()
-            end
-        end)
-        
-        Player.Character.ChildRemoved:Connect(function(child)
-            if child:IsA("Tool") and GameState.IsRoundActive then
-                PlayerRoles[Player.UserId] = CheckTools()
-            end
-        end)
-    end
-end
-
-MonitorGameState()
-
-local function GetPlayerRole(Player)
-    if game.PlaceId ~= 142823291 then return "Unknown" end
-    
-    if not PlayerRoles[Player.UserId] then
-        UpdatePlayerRole(Player)
-    end
-    
-    return PlayerRoles[Player.UserId] or "Innocent"
-end
-
-local function IsTeammate(Player)
-    if not _G.ChamsSettings.TeamCheck then return false end
-    return Player.Team == LocalPlayer.Team
-end
-
-local function ApplyChams(Player)
-    local Connections = {}
-    local CurrentHighlighter
-    
-    -- Khởi tạo role monitoring
-    UpdatePlayerRole(Player)
-    
-    local function Setup(Character)
-        if not Character then return end
-        
-        if CurrentHighlighter then
-            CurrentHighlighter:Destroy()
-        end
-        
-        local Highlighter = Instance.new("Highlight")
-        CurrentHighlighter = Highlighter
-        Highlighter.Parent = Character
-        
-        Highlighter.FillTransparency = 1
-        Highlighter.OutlineTransparency = 1
-        
-        local AnimationInfo = TweenInfo.new(
-            _G.ChamsSettings.Animation.Duration,
-            _G.ChamsSettings.Animation.Style,
-            _G.ChamsSettings.Animation.Direction
-        )
-        
-        local FillTween = TweenService:Create(Highlighter, AnimationInfo, {
-            FillTransparency = _G.ChamsSettings.FillTransparency
-        })
-        
-        local OutlineTween = TweenService:Create(Highlighter, AnimationInfo, {
-            OutlineTransparency = _G.ChamsSettings.OutlineTransparency
-        })
-        
-        FillTween:Play()
-        OutlineTween:Play()
-        
-        local function Update()
-            if not _G.ChamsSettings.Enabled then
-                Highlighter.Enabled = false
-                return
-            end
-            
-            if IsTeammate(Player) then
-                Highlighter.Enabled = false
-                return
-            end
-            
-            Highlighter.Enabled = true
-            
-            if _G.ChamsSettings.RoleCheck then
-                local role = GetPlayerRole(Player)
-                local roleColor = _G.ChamsSettings.Colors.Roles[role]
-                
-                if roleColor then
-                    Highlighter.FillColor = roleColor
-                    Highlighter.OutlineColor = roleColor
-                    print(Player.Name .. " is " .. role) -- Debug
-                else
-                    Highlighter.FillColor = _G.ChamsSettings.Colors.Fill
-                    Highlighter.OutlineColor = _G.ChamsSettings.Colors.Outline
-                end
-            else
-                Highlighter.FillColor = _G.ChamsSettings.Colors.Fill
-                Highlighter.OutlineColor = _G.ChamsSettings.Colors.Outline
-            end
-        end
-        
-        local UpdateConnection = RunService.RenderStepped:Connect(Update)
-        table.insert(Connections, UpdateConnection)
-        
-        -- Monitor character changes
-        Character.ChildAdded:Connect(function(child)
-            if child:IsA("Tool") then
-                UpdatePlayerRole(Player)
-            end
-        end)
-        
-        Character.ChildRemoved:Connect(function(child)
-            if child:IsA("Tool") then
-                UpdatePlayerRole(Player)
-            end
-        end)
-        
-        local Humanoid = Character:FindFirstChild("Humanoid")
-        if Humanoid then
-            table.insert(Connections, Humanoid.Died:Connect(function()
-                local FadeOutTween = TweenService:Create(Highlighter, TweenInfo.new(0.5), {
-                    FillTransparency = 1,
-                    OutlineTransparency = 1
-                })
-                FadeOutTween.Completed:Connect(function()
-                    Highlighter:Destroy()
-                end)
-                FadeOutTween:Play()
-            end))
-        end
-    end
-    
-    if Player.Character then
-        Setup(Player.Character)
-    end
-    
-    local CharacterAddedConnection = Player.CharacterAdded:Connect(function(Character)
-        task.wait()
-        Setup(Character)
-    end)
-    
-    table.insert(Connections, CharacterAddedConnection)
-    
-    local function Cleanup()
-        for _, Connection in pairs(Connections) do
-            Connection:Disconnect()
-        end
-        if CurrentHighlighter then
-            CurrentHighlighter:Destroy()
-        end
-        PlayerRoles[Player.UserId] = nil
-    end
-    
-    table.insert(Connections, Player.AncestryChanged:Connect(function(_, parent)
-        if not parent then
-            Cleanup()
-        end
-    end))
-    
-    return Cleanup
-end
-
--- UI Controls remain the same as before
-sections.Uni2Section1:Toggle({
-    Name = "Hiện Chams",
-    Default = false,
-    Callback = function(Value)
-        _G.ChamsSettings.Enabled = Value
-        
-        if Value then
-            for _, Player in pairs(Players:GetPlayers()) do
-                if Player ~= LocalPlayer then
-                    task.spawn(function()
-                        task.wait(math.random() * 0.3)
-                        ApplyChams(Player)
-                    end)
-                end
-            end
-            
-            if not _G.ChamsInitialized then
-                _G.ChamsInitialized = true
-                Players.PlayerAdded:Connect(function(Player)
-                    if Player ~= LocalPlayer then
-                        ApplyChams(Player)
-                    end
-                end)
-            end
-        end
-    end
-})
-
-sections.Uni2Section1:Toggle({
-    Name = "Role Check",
-    Default = false,
-    Callback = function(Value)
-        _G.ChamsSettings.RoleCheck = Value
-    end
-})
-
-sections.Uni2Section1:Toggle({
-    Name = "Team Check",
-    Default = false,
-    Callback = function(Value)
-        _G.ChamsSettings.TeamCheck = Value
-    end
-})
-
-sections.Uni2Section1:Colorpicker({
-    Name = "Màu Chính Chams",
-    Default = Color3.fromRGB(0, 255, 0),
-    Callback = function(color)
-        _G.ChamsSettings.Colors.Fill = color
-    end
-})
-
-sections.Uni2Section1:Colorpicker({
-    Name = "Màu Viền Chams",
-    Default = Color3.fromRGB(255, 255, 255),
-    Callback = function(color)
-        _G.ChamsSettings.Colors.Outline = color
-    end
-})
-
+----------------------------------------------------------------------------------------------------------------------------------
+ 
 ------------------------------------------
 sections.Uni2Section1:Header({
 	Name = "ESP Skeleton"
@@ -1814,394 +1067,9 @@ Players.PlayerRemoving:Connect(function(player)
         espBoxes[player] = nil
     end
 end)
-sections.UniSection1:Toggle({
-    Name = "Cảnh Báo Người Nhìn",
-    Default = false,
-    Callback = function(value)
-        if value then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/MouriPre/Canhbao/refs/heads/main/Hienbao"))()
-            Window:Notify({
-                Title = "Đã Bật Cảnh Báo",
-                Content = "Cảnh báo khi có người nhìn bạn đã được bật",
-                Time = 3
-            })
-        else
-            if game:GetService("CoreGui"):FindFirstChild("CompactWarning") then
-                game:GetService("CoreGui").CompactWarning:Destroy()
-            end
-            _G.WatchingESPSettings.Enabled = false
-            Window:Notify({
-                Title = "Đã Tắt Cảnh Báo",
-                Content = "Cảnh báo khi có người nhìn bạn đã được tắt",
-                Time = 3
-            })
-        end
-    end,
-}, "WatchingAlert")
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-sections.AimSection1:Header({
-    Name = "Aimbot Cơ Bản"
-})
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Camera = workspace.CurrentCamera
-local LocalPlayer = Players.LocalPlayer
-
-local AimbotEnabled = false
-local FOVHidden = false
-local FOVSize = 200
-local AimbotTarget = "Head"
-local AimbotRange = 50
-local FOVColor = Color3.fromRGB(255, 255, 255)
-local TeamCheck = false
-local WallCheck = false
-local LockedPlayer = nil
-local LockEnabled = false
-local AimbotSpeed = 100
-
--- Tạo FOV Circle
-local fovCircle = Drawing.new("Circle")
-fovCircle.Thickness = 1
-fovCircle.NumSides = 100
-fovCircle.Radius = FOVSize
-fovCircle.Filled = false
-fovCircle.Visible = false
-fovCircle.ZIndex = 999
-fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-fovCircle.Color = FOVColor
-
--- Hàm kiểm tra team
-local function IsTeammate(player)
-    if not TeamCheck then return false end
-    return player.Team == LocalPlayer.Team
-end
-
--- Hàm kiểm tra tầm nhìn
-local function IsVisible(targetPart)
-    if not WallCheck then return true end
-    
-    local origin = Camera.CFrame.Position
-    local targetPos = targetPart.Position
-    local direction = (targetPos - origin)
-    local distance = direction.Magnitude
-    direction = direction.Unit
-    
-    local rayParams = RaycastParams.new()
-    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
-    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, targetPart.Parent}
-    
-    local result = workspace:Raycast(origin, direction * distance, rayParams)
-    return result == nil
-end
-
-local function IsInFOV(position)
-    local screenPos, onScreen = Camera:WorldToScreenPoint(position)
-    if not onScreen then return false end
-    
-    local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    local screenPosition = Vector2.new(screenPos.X, screenPos.Y)
-    return (screenCenter - screenPosition).Magnitude <= FOVSize
-end
-
-local function GetClosestPlayerInFOV()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and 
-           player.Character and 
-           player.Character:FindFirstChild("HumanoidRootPart") and 
-           player.Character:FindFirstChild("Humanoid") and 
-           player.Character.Humanoid.Health > 0 and
-           not IsTeammate(player) then
-            
-            local targetPart = player.Character:FindFirstChild(AimbotTarget)
-            if targetPart then
-                local distance = (LocalPlayer.Character.HumanoidRootPart.Position - targetPart.Position).Magnitude
-                
-                if distance <= AimbotRange and IsVisible(targetPart) and IsInFOV(targetPart.Position) then
-                    if distance < shortestDistance then
-                        closestPlayer = player
-                        shortestDistance = distance
-                    end
-                end
-            end
-        end
-    end
-    
-    return closestPlayer
-end
-
-local function GetClosestPlayerWhenNoLock()
-    if LockEnabled and LockedPlayer and 
-       LockedPlayer.Character and 
-       LockedPlayer.Character:FindFirstChild("Humanoid") and 
-       LockedPlayer.Character.Humanoid.Health > 0 then
-        return LockedPlayer
-    end
-    
-    return GetClosestPlayerInFOV()
-end
-
--- Hàm cập nhật
-local function UpdateFOVVisibility()
-    fovCircle.Visible = AimbotEnabled and not FOVHidden
-end
-
-local function UpdateFOVPosition()
-    fovCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-end
-
-local function UpdateFOVColor(color)
-    FOVColor = color
-    fovCircle.Color = color
-end
-
-local function UpdateFOVSize(size)
-    FOVSize = size
-    fovCircle.Radius = size
-end
-
--- Mobile Aimbot Loop
-RunService:BindToRenderStep("MobileAimbot", 1, function()
-    UpdateFOVPosition()
-    UpdateFOVVisibility()
-    
-    if not AimbotEnabled then return end
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    
-    local target
-    if LockEnabled then
-        if LockedPlayer and 
-           LockedPlayer.Character and 
-           LockedPlayer.Character:FindFirstChild("Humanoid") and 
-           LockedPlayer.Character.Humanoid.Health > 0 then
-            target = LockedPlayer
-        else
-            LockedPlayer = GetClosestPlayerInFOV()
-            target = LockedPlayer
-        end
-    else
-        target = GetClosestPlayerInFOV()
-    end
-    
-    if target and target.Character and target.Character:FindFirstChild(AimbotTarget) then
-        local targetPos = target.Character[AimbotTarget].Position
-        local targetCFrame = CFrame.new(Camera.CFrame.Position, targetPos)
-        
-        -- Tính toán độ mượt dựa trên AimbotSpeed
-        local smoothness = math.clamp(1 - (AimbotSpeed / 500), 0, 0.99)
-        Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, 1 - smoothness)
-    end
-end)
-
--- Events for character
-LocalPlayer.CharacterAdded:Connect(function()
-    UpdateFOVVisibility()
-end)
-
-LocalPlayer.CharacterRemoving:Connect(function()
-    UpdateFOVVisibility()
-end)
-
--- Viewport size changed
-Camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateFOVPosition)
-
--- Toggle functions
-local function ToggleAimbot()
-    AimbotEnabled = not AimbotEnabled
-    UpdateFOVVisibility()
-end
-
-local function ToggleFOV()
-    FOVHidden = not FOVHidden
-    UpdateFOVVisibility()
-end
-
--- Toggle Aimbot
-sections.AimSection1:Toggle({
-    Name = "Bật/Tắt Aimbot",
-    Default = false,
-    Callback = function(value)
-        AimbotEnabled = value
-        UpdateFOVVisibility()
-        Window:Notify({
-            Title = "Aimbot đã được " .. (value and "Bật" or "Tắt")
-        })
-    end
-}, "AimbotToggle")
-
--- Toggle FOV
-sections.AimSection1:Toggle({
-    Name = "Ẩn Vòng Tròn",
-    Default = false,
-    Callback = function(value)
-        FOVHidden = value
-        UpdateFOVVisibility()
-        Window:Notify({
-            Title = "Vòng tròn đã được " .. (value and "Ẩn" or "Hiện")
-        })
-    end
-}, "FOVToggle")
-
--- Toggle TeamCheck
-sections.AimSection1:Toggle({
-    Name = "Kiểm Tra Đồng Đội",
-    Default = false,
-    Callback = function(value)
-        TeamCheck = value
-        Window:Notify({
-            Title = "Kiểm tra đồng đội đã được " .. (value and "Bật" or "Tắt")
-        })
-    end
-}, "TeamCheckToggle")
-
-sections.AimSection1:Toggle({
-    Name = "Kiểm Tra Vật Cản",
-    Default = false,
-    Callback = function(value)
-        WallCheck = value
-        Window:Notify({
-            Title = "Wall Check đã được " .. (value and "Bật" or "Tắt")
-        })
-    end
-}, "WallCheckToggle")
-
--- Slider FOV Size
-sections.AimSection1:Slider({
-    Name = "Size Fov",
-    Default = 200,
-    Minimum = 50,
-    Maximum = 500,
-    DisplayMethod = "Value",
-    Precision = 0,
-    Callback = function(Value)
-        UpdateFOVSize(Value)
-        Window:Notify({
-            Title = "Kích thước vòng tròn: " .. Value
-        })
-    end
-}, "FOVSizeSlider")
-
--- Dropdown Aimbot Target
-sections.Aim2Section1:Dropdown({
-    Name = "Vị Trí Nhắm",
-    Multi = false,
-    Required = true,
-    Options = {"Đầu", "Thân"},
-    Default = 1,
-    Callback = function(Value)
-        AimbotTarget = Value == "Đầu" and "Head" or "HumanoidRootPart"
-        Window:Notify({
-            Title = "Đã chọn nhắm vào: " .. Value
-        })
-    end
-}, "AimbotTargetDropdown")
-
--- Dropdown Aimbot Range
-sections.Aim2Section1:Dropdown({
-    Name = "Tầm Xa Aimbot",
-    Multi = false,
-    Required = true,
-    Options = {
-        "Mức 1 (50m)",
-        "Mức 2 (100m)",
-        "Mức 3 (150m)",
-        "Mức 4 (300m)",
-        "Mức 5 (1000m)"
-    },
-    Default = 1,
-    Callback = function(Value)
-        local ranges = {
-            ["Mức 1 (50m)"] = 50,
-            ["Mức 2 (100m)"] = 100,
-            ["Mức 3 (150m)"] = 150,
-            ["Mức 4 (300m)"] = 300,
-            ["Mức 5 (1000m)"] = 1000
-        }
-        AimbotRange = ranges[Value]
-        Window:Notify({
-            Title = "Tầm xa aimbot: " .. Value
-        })
-    end
-}, "AimbotRangeDropdown")
-
--- Thêm vào phần sections.AimSection1
-sections.Aim2Section1:Slider({
-    Name = "Khoảng Cách Aim",
-    Default = 50,
-    Minimum = 0,
-    Maximum = 5000,
-    DisplayMethod = "Value",
-    Precision = 0,
-    Callback = function(Value)
-        AimbotRange = Value -- Cập nhật giá trị AimbotRange
-        print("Aimbot Range set to: " .. Value .. "m")
-    end
-})
-
-sections.Aim2Section1:Toggle({
-    Name = "Khóa Người",
-    Default = false,
-    Callback = function(value)
-        LockEnabled = value
-        if not value then
-            LockedPlayer = nil -- Reset locked player khi tắt lock mode
-        end
-        Window:Notify({
-            Title = "Lock Mode đã được " .. (value and "Bật" or "Tắt")
-        })
-    end
-}, "LockModeToggle")
-
--- Thêm Button để Reset Lock Target (nếu muốn)
-----sections.AimSection1:Button({
-   --- Name = "Cài Lại Khóa",
-   --- Callback = function()
-        ---LockedPlayer = nil
-        ---Window:Notify({
-            ---Title = "Đã reset locked target"
-       -- })
-    --end
---})
-
-sections.Aim2Section1:Slider({
-    Name = "Tốc Độ Aimbot",
-    Default = 100,
-    Minimum = 1,
-    Maximum = 500,
-    DisplayMethod = "Value",
-    Precision = 0,
-    Callback = function(Value)
-        AimbotSpeed = Value
-        Window:Notify({
-            Title = "Tốc độ aimbot: " .. Value
-        })
-    end
-}, "AimbotSpeedSlider")
-
-
--- Colorpicker FOV Color
-sections.Aim2Section1:Colorpicker({
-    Name = "Màu Vòng Tròn",
-    Default = Color3.fromRGB(255, 255, 255),
-    Callback = function(color)
-        UpdateFOVColor(color)
-        Window:Notify({
-            Title = "Đã cập nhật màu vòng tròn"
-        })
-    end,
-}, "FOVColorpicker")
-
--- Cleanup
-LocalPlayer.CharacterRemoving:Connect(function()
-    gui:Destroy()
-end)
-
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------
 sections.ShaSection1:Header({
 	Name = "Lighting"
 })
@@ -2267,9 +1135,295 @@ sections.ShaSection1:Toggle({
         })
     end
 }, "Toggle")
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------
+sections.EspSection1:Header({
+	Name = "Universal"
+})
+-- Phiên bản bypass anti-cheat cơ bản
+local speedEnabled = false
+local speedValue = 50
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Bypass basic anti-cheat
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local old = mt.__namecall
+mt.__namecall = newcclosure(function(...)
+    local args = {...}
+    local method = getnamecallmethod()
+    
+    if method == "FireServer" or method == "InvokeServer" then
+        -- Chặn các remote events liên quan đến speed/movement
+        if args[1] == "WalkSpeed" or args[1] == "Speed" or args[1] == "CheckSpeed" then
+            return
+        end
+    end
+    return old(...)
+end)
+setreadonly(mt, true)
+
+-- Sử dụng CFrame movement thay vì WalkSpeed
+local function speedBypass()
+    if speedEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local humanoidRootPart = player.Character.HumanoidRootPart
+        local moveDirection = player.Character.Humanoid.MoveDirection
+        
+        if moveDirection.Magnitude > 0 then
+            -- Tăng hệ số chia để giảm độ nhạy của tốc độ cao
+            humanoidRootPart.CFrame = humanoidRootPart.CFrame + moveDirection * (speedValue/1000)
+        end
+    end
+end
+
+RunService.Heartbeat:Connect(speedBypass)
+
+sections.EspSection1:Toggle({
+    Name = "Speed Hack",
+    Default = false,
+    Callback = function(value)
+        speedEnabled = value
+        Window:Notify({
+            Title = "Speed Bypass",
+            Content = value and "Enabled" or "Disabled"
+        })
+    end
+}, "SpeedToggle")
+
+sections.EspSection1:Slider({
+    Name = "Tốc Độ Speed",
+    Default = 50,
+    Minimum = 16,
+    Maximum = 5000, -- Đã tăng maximum lên 5000
+    DisplayMethod = "Value",
+    Precision = 0,
+    Callback = function(Value)
+        speedValue = Value
+    end
+}, "SpeedSlider")
+
+-------------------------
+local jumpEnabled = false 
+local jumpValue = 50
+local defaultJump = 50
+local currentMode = "JumpPower"
+
+-- Basic anti-cheat bypass
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local old = mt.__namecall
+mt.__namecall = newcclosure(function(...)
+    local args = {...}
+    local method = getnamecallmethod()
+    if method == "FireServer" or method == "InvokeServer" then
+        if args[1] == "JumpPower" or args[1] == "JP" or args[1] == "JumpHeight" then
+            return
+        end
+    end
+    return old(...)
+end)
+setreadonly(mt, true)
+
+-- Function để set jump value dựa theo mode
+local function setJumpValue(humanoid, value)
+    if currentMode == "JumpPower" then
+        humanoid.JumpPower = value
+        humanoid.UseJumpPower = true
+    else
+        humanoid.JumpHeight = value/2.5
+    end
+end
+
+sections.EspSection1:Dropdown({
+    Name = "Mode Nhảy",
+    Multi = false,
+    Required = true,
+    Options = {"JumpPower", "JumpHeight"},
+    Default = 1,
+    Callback = function(Value)
+        currentMode = Value
+        if jumpEnabled and player.Character and player.Character:FindFirstChild("Humanoid") then
+            setJumpValue(player.Character.Humanoid, jumpValue)
+        end
+        Window:Notify({
+            Title = "Jump Mode",
+            Content = "Changed to " .. Value
+        })
+    end
+}, "JumpModeDropdown")
+
+sections.EspSection1:Toggle({
+    Name = "Nhảy Cao",
+    Default = false,
+    Callback = function(value)
+        jumpEnabled = value
+        if value then
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                setJumpValue(player.Character.Humanoid, jumpValue)
+            end
+            Window:Notify({
+                Title = "Jump Changer",
+                Content = "Enabled"
+            })
+        else
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                setJumpValue(player.Character.Humanoid, defaultJump)
+            end
+            Window:Notify({
+                Title = "Jump Changer",
+                Content = "Disabled"
+            })
+        end
+    end
+}, "JumpToggle")
+
+sections.EspSection1:Slider({
+    Name = "Sức Nhảy",
+    Default = 50,
+    Minimum = 50,
+    Maximum = 500, -- Tăng maximum lên 5000
+    DisplayMethod = "Value",
+    Precision = 0,
+    Callback = function(Value)
+        jumpValue = Value
+        if jumpEnabled then
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                setJumpValue(player.Character.Humanoid, Value)
+            end
+        end
+    end
+}, "JumpSlider")
+
+-- Handle character respawn
+player.CharacterAdded:Connect(function(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    if jumpEnabled then
+        setJumpValue(humanoid, jumpValue)
+    end
+end)
+-----------------------------
+sections.EspSection1:Paragraph({
+	Header = "Ấn Giữ Nút Nhảy Hoặc Bấm Liên Tục Nút Nhảy",
+	Body = "Có Thể Dùng Kết Hợp Nhảy Cao"
+})
+
+local infiniteJumpEnabled = false
+
+-- Basic anti-cheat bypass
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local old = mt.__namecall
+mt.__namecall = newcclosure(function(...)
+    local args = {...}
+    local method = getnamecallmethod()
+    if method == "FireServer" or method == "InvokeServer" then
+        if args[1] == "JumpRequest" or args[1] == "Jump" then
+            return
+        end
+    end
+    return old(...)
+end)
+setreadonly(mt, true)
+
+-- Infinite Jump Logic
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled then
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+sections.EspSection1:Toggle({
+    Name = "Nhảy Liên Tục",
+    Default = false,
+    Callback = function(value)
+        infiniteJumpEnabled = value
+        Window:Notify({
+            Title = "Infinite Jump",
+            Content = value and "Enabled" or "Disabled"
+        })
+    end
+}, "InfiniteJumpToggle")
+-------------------------------------
+local noclipEnabled = false
+
+-- Basic anti-cheat bypass
+local mt = getrawmetatable(game)
+setreadonly(mt, false)
+local old = mt.__namecall
+mt.__namecall = newcclosure(function(...)
+    local args = {...}
+    local method = getnamecallmethod()
+    if method == "FireServer" or method == "InvokeServer" then
+        if args[1] == "Noclip" or args[1] == "Phase" then
+            return
+        end
+    end
+    return old(...)
+end)
+setreadonly(mt, true)
+
+-- Noclip Function
+local function noclipRun()
+    if noclipEnabled then
+        if player.Character then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end
+
+-- Connect noclip to RunService
+RunService.Stepped:Connect(noclipRun)
+
+-- Noclip Toggle
+sections.EspSection1:Toggle({
+    Name = "Xuyên Tường",
+    Default = false,
+    Callback = function(value)
+        noclipEnabled = value
+        
+        if value then
+            -- Khi bật Noclip
+            if player.Character then
+                for _, part in pairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        else
+            -- Khi tắt Noclip
+            if player.Character then
+                for _, part in pairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                        part.CanCollide = true
+                    end
+                end
+            end
+        end
+
+        Window:Notify({
+            Title = "Noclip",
+            Content = value and "Enabled" or "Disabled"
+        })
+    end
+}, "NoclipToggle")
+
+-- Handle character respawn
+player.CharacterAdded:Connect(function(character)
+    if noclipEnabled then
+        wait(0.5) -- Đợi character load
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+-------------------------------
 local floatEnabled = false
 local floatHeight = 100 -- Độ cao mặc định khi bật Float
 
@@ -2452,9 +1606,87 @@ player.CharacterAdded:Connect(function()
         wait(0.5) -- Đợi character load
     end
 end)
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------
+local antiAFKEnabled = true
 
---------------------------------------------------------------------------------------------------------
+-- Toggle UI với tên tiếng Việt
+sections.Pla2Section1:Toggle({
+    Name = "Chống AFK",
+    Default = true,
+    Callback = function(Value)
+        antiAFKEnabled = Value
+        
+        if antiAFKEnabled then
+            -- Khi người chơi bị kick vì AFK
+            Players.LocalPlayer.Idled:Connect(function()
+                if antiAFKEnabled then
+                    -- Giả lập click chuột để tránh AFK
+                    VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                    wait(0.1)
+                    VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                end
+            end)
+        end
+        
+        Window:Notify({
+            Title = "Chống AFK",
+            Content = Value and "Đã Bật" or "Đã Tắt"
+        })
+    end
+}, "AntiAFKToggle")
+----------------------------------------------------------------------------------------------------------------------------
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local camera = workspace.CurrentCamera
+local defaultFOV = 70
+local fovEnabled = false
+local currentFOV = 70
+
+-- FOV Toggle
+sections.Uni2Section1:Toggle({
+    Name = "FOV Changer",
+    Default = false,
+    Callback = function(Value)
+        fovEnabled = Value
+        if Value then
+            -- Lưu FOV mặc định
+            defaultFOV = camera.FieldOfView
+            camera.FieldOfView = currentFOV
+        else
+            -- Khôi phục FOV mặc định
+            camera.FieldOfView = defaultFOV
+        end
+        
+        Window:Notify({
+            Title = "Phạm Vi Quan Sát",
+            Content = Value and "Đã Bật" or "Đã Tắt"
+        })
+    end
+}, "FOVToggle")
+
+-- FOV Slider
+sections.Esp2Section1:Slider({
+    Name = "Điều Chỉnh Tầm",
+    Default = 70,
+    Minimum = 1,
+    Maximum = 120,
+    DisplayMethod = "Value",
+    Precision = 0,
+    Callback = function(Value)
+        currentFOV = Value
+        if fovEnabled then
+            camera.FieldOfView = Value
+        end
+    end
+}, "FOVSlider")
+
+-- Để đảm bảo FOV luôn được cập nhật
+RunService.RenderStepped:Connect(function()
+    if fovEnabled then
+        camera.FieldOfView = currentFOV
+    end
+end)
+---------------------
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local clickTpEnabled = false
@@ -2487,93 +1719,52 @@ UserInputService.TouchTap:Connect(function(touchPositions)
         end
     end
 end)
-------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------
 local Players = game:GetService("Players")
 local UserSettings = UserSettings()
 local GameSettings = UserSettings.GameSettings
 
-
-------------------------------------------------------------------------------------------------------------------------------------------
----------------------
-sections.UniSection1:Paragraph({
-	Header = "Máy Yếu Bị Cân Nhắc Bật",
-	Body = "X-Ray Dễ Dàng Nhìn Xuyên"
-})
-
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local xrayEnabled = false
-
--- X-Ray Toggle
-sections.UniSection1:Toggle({
-    Name = "Nhìn Xuyên Tường",
+-- Unlock Camera Distance Toggle
+sections.Esp2Section1:Toggle({
+    Name = "Mở Giới Hạn Camera",
     Default = false,
     Callback = function(Value)
-        xrayEnabled = Value
-        
         if Value then
-            -- Thực hiện X-Ray
-            RunService:BindToRenderStep("XRay", 2000, function()
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        -- Kiểm tra xem part có thuộc Player không
-                        local isPlayerPart = false
-                        for _, player in pairs(Players:GetPlayers()) do
-                            if player.Character and v:IsDescendantOf(player.Character) then
-                                isPlayerPart = true
-                                break
-                            end
-                        end
-                        
-                        -- Chỉ áp dụng transparency cho các part không thuộc Player
-                        if not isPlayerPart then
-                            v.LocalTransparencyModifier = 0.7
-                        end
-                    end
+            -- Tắt giới hạn camera của Roblox
+            if GameSettings.CameraMode == Enum.CameraMode.LockFirstPerson then
+                GameSettings.CameraMode = Enum.CameraMode.Classic
+            end
+            
+            -- Set khoảng cách camera tối đa
+            Players.LocalPlayer.CameraMaxZoomDistance = math.huge
+            GameSettings.CameraZoomSensitivity = 150
+            
+            -- Đảm bảo luôn được zoom xa
+            spawn(function()
+                while Value do
+                    wait()
+                    Players.LocalPlayer.CameraMaxZoomDistance = math.huge
+                    Players.LocalPlayer.CameraMinZoomDistance = 0.5
                 end
             end)
         else
-            -- Tắt X-Ray
-            RunService:UnbindFromRenderStep("XRay")
-            for _, v in pairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.LocalTransparencyModifier = 0
-                end
-            end
+            -- Reset về mặc định
+            Players.LocalPlayer.CameraMaxZoomDistance = 400
+            Players.LocalPlayer.CameraMinZoomDistance = 0.5
+            GameSettings.CameraZoomSensitivity = 100
         end
         
         Window:Notify({
-            Title = "Nhìn Xuyên Tường",
+            Title = "Mở Giới Hạn Camera",
             Content = Value and "Đã Bật" or "Đã Tắt"
         })
     end
-}, "XRayToggle")
-------------------------
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+}, "UnlockCamDistToggle")
+---------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- Invisicam Toggle
-sections.UniSection1:Toggle({
-    Name = "Camera Xuyên Tường",
-    Default = false,
-    Callback = function(Value)
-        if LocalPlayer.DevEnableMouseLock then        
-            LocalPlayer.DevEnableMouseLock = false
-        end
-        
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.UseJumpPower = false
-        end
-        
-        LocalPlayer.DevCameraOcclusionMode = Value and "Invisicam" or "Zoom"
-        
-        Window:Notify({
-            Title = "Camera Xuyên Tường",
-            Content = Value and "Đã Bật" or "Đã Tắt"
-        })
-    end
-}, "InvisicamToggle")
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------
 
 sections.PlaSection1:Paragraph({
 	Header = "Miễn Phí Toàn Bộ Animation",
@@ -2839,7 +2030,7 @@ sections.PlaSection1:Dropdown({
     end
 }, "AnimationChanger")
 
--------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 local Player = game:GetService("Players").LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Root = Character:WaitForChild("HumanoidRootPart")
@@ -3204,233 +2395,8 @@ sections.PlaSection1:Button({
         end
     end
 })
------------------
-sections.Pla2Section1:Paragraph({
-	Header = "Khi Bật Sẽ Ghi Lại Hành Động Khi Tắt Sẽ Tua Ngược Lại Hành Động",
-	Body = "Ghi Hành Động Khi Bật Sẽ Ghi Lại Lưư Ý Phải Tắt Đi Mới Lưu. Và Bật Phát Lại Sẽ Lập Đi Lập Lại Hành Động Đã Ghi"
-})
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-local recordedActions = {}
-local isRecording = false
-local isReplaying = false
-local recordingConnection = nil
-local reverseConnection = nil
-
-sections.Pla2Section1:Toggle({
-    Name = "Tua Ngược Hành Động",
-    Default = false,
-    Callback = function(value)
-        local character = game.Players.LocalPlayer.Character
-        local humanoid = character and character:FindFirstChild("Humanoid")
-        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-        
-        if not character or not humanoid or not rootPart then
-            Window:Notify({
-                Title = "Error",
-                Content = "Character not found!",
-                Duration = 3
-            })
-            return
-        end
-
-        -- Cleanup function
-        local function cleanupConnections()
-            if recordingConnection then
-                recordingConnection:Disconnect()
-                recordingConnection = nil
-            end
-            if reverseConnection then
-                reverseConnection:Disconnect()
-                reverseConnection = nil
-            end
-        end
-
-        if value then -- Bắt đầu ghi
-            cleanupConnections()
-            recordedActions = {}
-            isRecording = true
-
-            recordingConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                if isRecording then
-                    table.insert(recordedActions, {
-                        position = rootPart.CFrame,
-                        jumping = humanoid.Jump,
-                        moveDirection = humanoid.MoveDirection
-                    })
-                end
-            end)
-
-            Window:Notify({
-                Title = "Recording",
-                Content = "Started recording movements",
-                Duration = 3
-            })
-
-        else -- Kết thúc ghi và phát ngược lại ngay lập tức
-            if isRecording then
-                isRecording = false
-                cleanupConnections()
-
-                if #recordedActions > 0 then
-                    -- Phát ngược lại ngay lập tức
-                    local actionIndex = #recordedActions
-                    reverseConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                        if actionIndex < 1 then
-                            cleanupConnections()
-                            return
-                        end
-
-                        local action = recordedActions[actionIndex]
-                        rootPart.CFrame = action.position
-                        humanoid.Jump = action.jumping
-                        humanoid:Move(action.moveDirection)
-                        actionIndex = actionIndex - 1
-                    end)
-
-                    Window:Notify({
-                        Title = "Replaying",
-                        Content = "Replaying movements in reverse",
-                        Duration = 3
-                    })
-                end
-            end
-        end
-    end
-})
-----------------------
-local recordedActions = {}
-local isRecording = false
-local isReplaying = false
-local recordingConnection = nil
-local replayConnection = nil
-
--- Toggle để ghi lại hành động
-sections.Pla2Section1:Toggle({
-    Name = "Ghi Hành Động",
-    Default = false,
-    Callback = function(value)
-        local character = game.Players.LocalPlayer.Character
-        local humanoid = character and character:FindFirstChild("Humanoid")
-        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-        
-        if not character or not humanoid or not rootPart then
-            Window:Notify({
-                Title = "Error",
-                Content = "Character not found!",
-                Duration = 3
-            })
-            return
-        end
-
-        if value then -- Bắt đầu ghi
-            recordedActions = {}
-            isRecording = true
-
-            if recordingConnection then
-                recordingConnection:Disconnect()
-            end
-
-            recordingConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                if isRecording then
-                    table.insert(recordedActions, {
-                        position = rootPart.CFrame,
-                        jumping = humanoid.Jump,
-                        moveDirection = humanoid.MoveDirection
-                    })
-                end
-            end)
-
-            Window:Notify({
-                Title = "Recording",
-                Content = "Started recording movements",
-                Duration = 3
-            })
-        else -- Kết thúc ghi và lưu lại
-            isRecording = false
-            if recordingConnection then
-                recordingConnection:Disconnect()
-            end
-
-            Window:Notify({
-                Title = "Saved",
-                Content = "Recording saved!",
-                Duration = 3
-            })
-        end
-    end
-})
-
--- Toggle để phát lại hành động đã ghi
-sections.Pla2Section1:Toggle({
-    Name = "Phát Lại",
-    Default = false,
-    Callback = function(value)
-        local character = game.Players.LocalPlayer.Character
-        local humanoid = character and character:FindFirstChild("Humanoid")
-        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-        
-        if not character or not humanoid or not rootPart then
-            Window:Notify({
-                Title = "Error",
-                Content = "Character not found!",
-                Duration = 3
-            })
-            return
-        end
-
-        if value then -- Bắt đầu phát lại
-            if #recordedActions == 0 then
-                Window:Notify({
-                    Title = "Error",
-                    Content = "No recorded movements found!",
-                    Duration = 3
-                })
-                return
-            end
-
-            isReplaying = true
-            local actionIndex = 1
-
-            if replayConnection then
-                replayConnection:Disconnect()
-            end
-
-            replayConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                if not isReplaying then
-                    replayConnection:Disconnect()
-                    return
-                end
-
-                if actionIndex > #recordedActions then
-                    actionIndex = 1 -- Lặp lại từ đầu
-                end
-
-                local action = recordedActions[actionIndex]
-                rootPart.CFrame = action.position
-                humanoid.Jump = action.jumping
-                humanoid:Move(action.moveDirection)
-                actionIndex = actionIndex + 1
-            end)
-
-            Window:Notify({
-                Title = "Replaying",
-                Content = "Replaying recorded movements",
-                Duration = 3
-            })
-        else -- Dừng phát lại
-            isReplaying = false
-            if replayConnection then
-                replayConnection:Disconnect()
-            end
-
-            Window:Notify({
-                Title = "Stopped",
-                Content = "Stopped replaying movements",
-                Duration = 3
-            })
-        end
-    end
-})
 -------------------
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -3489,8 +2455,247 @@ sections.Pla2Section1:Toggle({
     end
 })
 ---------------------------------------
+sections.EspMSection1:Paragraph({
+	Header = "Chức Năng Này Hiện Chưa Ổn Định",
+	Body = "Sẽ Esp Chams Lên Tất Cả Item Và Model"
+})
 
------------------------------------------------------------------------
+sections.EspMSection1:Toggle({
+    Name = "ESPM Chams",
+    Default = false,
+    Callback = function(value)
+        if value then
+            local RunService = game:GetService("RunService")
+            local Players = game:GetService("Players")
+            local LocalPlayer = Players.LocalPlayer
+            
+            if not getgenv().espHighlights then
+                getgenv().espHighlights = {}
+            end
+            
+            if not getgenv().trackedObjects then
+                getgenv().trackedObjects = {}
+            end
+
+            local function hasClickDetector(object)
+                if object:IsA("BasePart") and object:FindFirstChildOfClass("ClickDetector") then
+                    return true
+                elseif object:IsA("Model") then
+                    for _, part in ipairs(object:GetDescendants()) do
+                        if part:FindFirstChildOfClass("ClickDetector") then
+                            return true
+                        end
+                    end
+                end
+                return false
+            end
+
+            local function createHighlight(object, color)
+                if object:FindFirstChild("Highlight") then return end
+                
+                local highlight = Instance.new("Highlight")
+                highlight.FillColor = color or Color3.fromRGB(255, 0, 0)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                highlight.FillTransparency = 0.5
+                highlight.OutlineTransparency = 0
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Parent = object
+                
+                table.insert(getgenv().espHighlights, highlight)
+                return highlight
+            end
+
+            local function updateHighlight(object)
+                if not object or not object.Parent then return end
+                
+                local highlight = object:FindFirstChild("Highlight")
+                if not highlight then return end
+                
+                -- Cập nhật màu sắc dựa trên loại đối tượng
+                if object:IsA("Model") and object:FindFirstChild("Humanoid") then
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Màu đỏ cho NPC
+                else
+                    highlight.FillColor = Color3.fromRGB(0, 0, 255) -- Màu xanh cho items
+                end
+            end
+
+            local function handleESP(object)
+                -- Xử lý objects có ClickDetector
+                if hasClickDetector(object) then
+                    if not getgenv().trackedObjects[object] then
+                        local pos = object:IsA("Model") and 
+                            (object:GetPrimaryPartCFrame() and object:GetPrimaryPartCFrame().Position or object:GetModelCFrame().Position) or 
+                            object.Position
+                        getgenv().trackedObjects[object] = {
+                            isItem = true,
+                            lastPosition = pos
+                        }
+                    end
+                    createHighlight(object, Color3.fromRGB(0, 0, 255))
+                end
+                
+                -- Xử lý models có Humanoid (NPC)
+                if object:IsA("Model") and object:FindFirstChild("Humanoid") then
+                    local isPlayer = false
+                    for _, player in ipairs(Players:GetPlayers()) do
+                        if player.Character == object then
+                            isPlayer = true
+                            break
+                        end
+                    end
+                    
+                    if not isPlayer then
+                        if not getgenv().trackedObjects[object] then
+                            getgenv().trackedObjects[object] = {
+                                isNPC = true,
+                                lastPosition = object:GetPrimaryPartCFrame().Position
+                            }
+                        end
+                        createHighlight(object, Color3.fromRGB(255, 0, 0))
+                        
+                        -- Theo dõi di chuyển của NPC
+                        if not object:GetAttribute("ESP_Tracking") then
+                            object:SetAttribute("ESP_Tracking", true)
+                            local humanoid = object:FindFirstChild("Humanoid")
+                            if humanoid then
+                                humanoid.Running:Connect(function()
+                                    if getgenv().trackedObjects[object] then
+                                        updateHighlight(object)
+                                    end
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+
+            local function cleanupObject(object)
+                if getgenv().trackedObjects[object] then
+                    getgenv().trackedObjects[object] = nil
+                end
+                if object:FindFirstChild("Highlight") then
+                    local highlight = object.Highlight
+                    for i, stored_highlight in ipairs(getgenv().espHighlights) do
+                        if stored_highlight == highlight then
+                            table.remove(getgenv().espHighlights, i)
+                            break
+                        end
+                    end
+                    highlight:Destroy()
+                end
+            end
+
+            -- Khởi tạo ESP cho objects hiện có
+            for _, object in ipairs(workspace:GetDescendants()) do
+                handleESP(object)
+            end
+
+            local descendantAddedConnection = workspace.DescendantAdded:Connect(function(object)
+                task.wait()
+                handleESP(object)
+            end)
+
+            local descendantRemovingConnection = workspace.DescendantRemoving:Connect(cleanupObject)
+
+            local heartbeatConnection = RunService.Heartbeat:Connect(function()
+                for object, data in pairs(getgenv().trackedObjects) do
+                    if object and object.Parent then
+                        local currentPos
+                        if object:IsA("Model") and object:FindFirstChild("HumanoidRootPart") then
+                            currentPos = object.HumanoidRootPart.Position
+                        else
+                            currentPos = object:IsA("Model") and 
+                                (object:GetPrimaryPartCFrame() and object:GetPrimaryPartCFrame().Position or object:GetModelCFrame().Position) or 
+                                object.Position
+                        end
+                        
+                        -- Cập nhật vị trí cuối cùng
+                        if data.lastPosition then
+                            local distance = (currentPos - data.lastPosition).Magnitude
+                            if distance > 0.1 then
+                                -- Object đang di chuyển
+                                updateHighlight(object)
+                            end
+                        end
+                        data.lastPosition = currentPos
+                    else
+                        getgenv().trackedObjects[object] = nil
+                    end
+                end
+            end)
+
+            getgenv().ESPConnections = {
+                descendantAdded = descendantAddedConnection,
+                descendantRemoving = descendantRemovingConnection,
+                heartbeat = heartbeatConnection
+            }
+
+        else
+            -- Cleanup khi tắt ESP
+            if getgenv().ESPConnections then
+                for _, connection in pairs(getgenv().ESPConnections) do
+                    if connection then
+                        connection:Disconnect()
+                    end
+                end
+            end
+
+            if getgenv().espHighlights then
+                for _, highlight in ipairs(getgenv().espHighlights) do
+                    if highlight and highlight.Parent then
+                        highlight:Destroy()
+                    end
+                end
+                table.clear(getgenv().espHighlights)
+            end
+
+            if getgenv().trackedObjects then
+                for object, _ in pairs(getgenv().trackedObjects) do
+                    if object then
+                        object:SetAttribute("ESP_Tracking", nil)
+                    end
+                end
+                table.clear(getgenv().trackedObjects)
+            end
+        end
+
+        Window:Notify({
+            Title = Window.Settings.Title,
+            Content = value and "ESP Enabled" or "ESP Disabled",
+            Duration = 3
+        })
+    end,
+}, "Toggle")
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+local ESP = {
+    Enabled = false,
+    espLabels = {},
+    trackedObjects = {},
+    Connections = {}
+}
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+
+local lighting = game:GetService("Lighting")
+
+local Dropdown = sections.ShaSection1:Dropdown({
+    Name = "Technology",
+    Multi = false,
+    Required = true,
+    Options = {
+        "Future",
+        "Compatibility", 
+        "Legacy",
+        "ShadowMap",
+        "Unified",
+        "Voxel"
+    },
+    Default = "Future",
+    Callback = function(Value)
+        lighting.Technology = Enum.Technology[Value]
+    end,
+}, "Technology")
+-------------------------------------------------------------------------------------------------------------
 local lighting = game:GetService("Lighting")
 local isTimeEnabled = false
 
@@ -3520,9 +2725,33 @@ sections.ShaSection1:Toggle({
         end
     end,
 }, "TimeControl")
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+sections.UniSection1:Toggle({
+    Name = "Cảnh Báo Người Nhìn",
+    Default = false,
+    Callback = function(value)
+        if value then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/MouriPre/Canhbao/refs/heads/main/Hienbao"))()
+            Window:Notify({
+                Title = "Đã Bật Cảnh Báo",
+                Content = "Cảnh báo khi có người nhìn bạn đã được bật",
+                Time = 3
+            })
+        else
+            if game:GetService("CoreGui"):FindFirstChild("CompactWarning") then
+                game:GetService("CoreGui").CompactWarning:Destroy()
+            end
+            _G.WatchingESPSettings.Enabled = false
+            Window:Notify({
+                Title = "Đã Tắt Cảnh Báo",
+                Content = "Cảnh báo khi có người nhìn bạn đã được tắt",
+                Time = 3
+            })
+        end
+    end,
+}, "WatchingAlert")
 
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
 
 -- Hàm lưu vị trí
 local function savePosition(position)
