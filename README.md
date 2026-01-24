@@ -1605,7 +1605,7 @@ end)
 local antiAFKEnabled = true
 
 -- Toggle UI với tên tiếng Việt
-sections.Esp2Section1:Toggle({
+sections.EspSection1:Toggle({
     Name = "Chống AFK",
     Default = true,
     Callback = function(Value)
@@ -1720,7 +1720,7 @@ local UserSettings = UserSettings()
 local GameSettings = UserSettings.GameSettings
 
 -- Unlock Camera Distance Toggle
-sections.Esp2Section1:Toggle({
+sections.EspSection1:Toggle({
     Name = "Mở Giới Hạn Camera",
     Default = false,
     Callback = function(Value)
