@@ -2580,7 +2580,7 @@ MainButton.Name = "MainButton"
 MainButton.Size = UDim2.new(0, 50, 0, 50)
 MainButton.Position = loadPosition() -- Đọc vị trí đã lưu
 MainButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainButton.Image = "rbxassetid://128828160886762"
+MainButton.Image = "rbxassetid://88938377157400"
 MainButton.BackgroundTransparency = 0
 MainButton.Parent = ScreenGui
 
