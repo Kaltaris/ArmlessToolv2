@@ -784,7 +784,7 @@ sections.UniSection1:Toggle({
     end
 })
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
 ------------------------------------------
 sections.Uni2Section1:Header({
@@ -1062,7 +1062,7 @@ Players.PlayerRemoving:Connect(function(player)
         espBoxes[player] = nil
     end
 end)
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -------------------------------------
 sections.ShaSection1:Header({
@@ -2076,7 +2076,7 @@ Player.CharacterAdded:Connect(function(newCharacter)
 end)
 
 
-----------------------
+-----------------------------------------------------------------------------------------------------------
 local Player = game:GetService("Players").LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Root = Character:WaitForChild("HumanoidRootPart")
@@ -2151,7 +2151,7 @@ Player.CharacterAdded:Connect(function(newCharacter)
         Root:FindFirstChild("AstronautFloat"):Destroy()
     end
 end)
-------------------------
+----------------------------------------------------------------------------------------------------------
 local savedPosition = nil
 local walkConnection = nil
 local humanoidMoving = false
@@ -2271,7 +2271,7 @@ end
 
 -- Dropdown để chọn phương thức di chuyển
 local moveDropdown = sections.PlaSection1:Dropdown({
-    Name = "Loạn Di Chuyển",
+    Name = "Loại Di Chuyển",
     Multi = false,
     Required = false,
     Options = {"Teleport", "Walk", "Tween"},
