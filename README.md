@@ -1136,7 +1136,7 @@ sections.EspSection1:Header({
 })
 -- Phiên bản bypass anti-cheat cơ bản
 local speedEnabled = true
-local speedValue = 50
+local speedValue = 300
 
 -- Bypass basic anti-cheat
 local mt = getrawmetatable(game)
