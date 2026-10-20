@@ -1135,7 +1135,7 @@ sections.EspSection1:Header({
 	Name = "Universal"
 })
 -- Phiên bản bypass anti-cheat cơ bản
-local speedEnabled = false
+local speedEnabled = true
 local speedValue = 50
 
 -- Bypass basic anti-cheat
@@ -1173,7 +1173,7 @@ RunService.Heartbeat:Connect(speedBypass)
 
 sections.EspSection1:Toggle({
     Name = "Speed Hack",
-    Default = false,
+    Default = true,
     Callback = function(value)
         speedEnabled = value
         Window:Notify({
@@ -1247,7 +1247,7 @@ sections.EspSection1:Dropdown({
 
 sections.EspSection1:Toggle({
     Name = "Nhảy Cao",
-    Default = false,
+    Default = true,
     Callback = function(value)
         jumpEnabled = value
         if value then
@@ -1274,7 +1274,7 @@ sections.EspSection1:Slider({
     Name = "Sức Nhảy",
     Default = 50,
     Minimum = 50,
-    Maximum = 500, -- Tăng maximum lên 5000
+    Maximum = 500, -- Tăng maximum lên 500
     DisplayMethod = "Value",
     Precision = 0,
     Callback = function(Value)
@@ -1294,13 +1294,13 @@ player.CharacterAdded:Connect(function(character)
         setJumpValue(humanoid, jumpValue)
     end
 end)
------------------------------
+--------------------------------------------------------------------------------------------------------------
 sections.EspSection1:Paragraph({
 	Header = "Ấn Giữ Nút Nhảy Hoặc Bấm Liên Tục Nút Nhảy",
 	Body = "Có Thể Dùng Kết Hợp Nhảy Cao"
 })
 
-local infiniteJumpEnabled = false
+local infiniteJumpEnabled = true
 
 -- Basic anti-cheat bypass
 local mt = getrawmetatable(game)
@@ -1329,7 +1329,7 @@ end)
 
 sections.EspSection1:Toggle({
     Name = "Nhảy Liên Tục",
-    Default = false,
+    Default = true,
     Callback = function(value)
         infiniteJumpEnabled = value
         Window:Notify({
@@ -1662,9 +1662,9 @@ sections.Esp2Section1:Toggle({
 -- FOV Slider
 sections.Esp2Section1:Slider({
     Name = "Điều Chỉnh Tầm",
-    Default = 70,
+    Default = 100,
     Minimum = 1,
-    Maximum = 120,
+    Maximum = 150,
     DisplayMethod = "Value",
     Precision = 0,
     Callback = function(Value)
@@ -1681,7 +1681,7 @@ RunService.RenderStepped:Connect(function()
         camera.FieldOfView = currentFOV
     end
 end)
----------------------
+------------------------------------------------------------------------------------
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local clickTpEnabled = false
@@ -1722,7 +1722,7 @@ local GameSettings = UserSettings.GameSettings
 -- Unlock Camera Distance Toggle
 sections.EspSection1:Toggle({
     Name = "Mở Giới Hạn Camera",
-    Default = false,
+    Default = true,
     Callback = function(Value)
         if Value then
             -- Tắt giới hạn camera của Roblox
